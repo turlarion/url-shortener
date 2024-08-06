@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 
 	"turlarion.ru/url-shortener/internal/models"
@@ -10,11 +12,11 @@ import (
 
 func Save(w http.ResponseWriter, r *http.Request) {
 	var req models.Request
-	json.NewDecoder(r.Body).Decode(&req)
-	// if err != nil {
-	// 	log.Println(fmt.Errorf("could not parse request body"))
-	// 	return
-	// }
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		log.Println(fmt.Errorf("could not parse request body"))
+		return
+	}
 
 	services.SaveNewUrl(req.Url, req.Timeout)
 
