@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/redis/go-redis/v9"
 	"turlarion.ru/url-shortener/internal/models"
 	"turlarion.ru/url-shortener/internal/services"
 )
@@ -46,8 +47,8 @@ func (h handler) Save(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h handler) Get(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h handler) Redirect(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "linkId")
 	if id == "" {
 		http.Error(w, "link is bad", http.StatusBadRequest)
 		return
@@ -55,9 +56,32 @@ func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.service.GetFullLink(id)
 	if err != nil {
+
+		if err == redis.Nil {
+			http.Error(w, "url not found", http.StatusBadRequest)
+			return
+		}
+
 		http.Error(w, "Error occured", http.StatusInternalServerError)
+		return
 	}
+
+	fmt.Println("redirecting to " + response)
 
 	http.Redirect(w, r, response, http.StatusSeeOther)
 
+}
+
+func (h handler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "linkId")
+	if id == "" {
+		http.Error(w, "link is bad", http.StatusBadRequest)
+		return
+	}
+
+	err := h.service.DeleteShortLink(id)
+	if err != nil {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
 }

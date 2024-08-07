@@ -16,9 +16,6 @@ type Config struct {
 		Host string `yaml:"host"`
 		Port int    `yaml:"port"`
 	} `yaml:"server"`
-	System struct {
-		DefaultTimeout int `yaml:"defaultTimeout"`
-	} `yaml:"system"`
 }
 
 func FromFile(filePath string) (*Config, error) {

@@ -27,10 +27,11 @@ func main() {
 	h := api.NewHandler(cfg.Redis.Host, cfg.Redis.Port, cfg.Redis.Password, cfg.Server.Host)
 
 	r.Post("/save", h.Save)
-	r.Get("/{id}", h.Get)
+	r.Get("/{linkId}", h.Redirect)
+	r.Delete("/{linkId}", h.Delete)
 
-	r.Get("/hw", func(w http.ResponseWriter, r *http.Request) {
-		println("HELLO WORLD!")
-	})
-	http.ListenAndServe(strconv.Itoa(cfg.Server.Port), r)
+	err = http.ListenAndServe("localhost:"+strconv.Itoa(cfg.Server.Port), r)
+	if err != nil {
+		fmt.Println("could not start application: " + err.Error())
+	}
 }

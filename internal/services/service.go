@@ -1,7 +1,10 @@
 package services
 
 import (
+	"context"
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -9,7 +12,8 @@ import (
 )
 
 type ShortenerService struct {
-	rc redis.Client
+	rc  redis.Client
+	ctx context.Context
 }
 
 func New(host string, port int, pwd string) ShortenerService {
@@ -20,13 +24,19 @@ func New(host string, port int, pwd string) ShortenerService {
 		DB:       0,
 	})
 
-	return ShortenerService{*client}
+	return ShortenerService{rc: *client, ctx: context.TODO()}
 }
 
 func (s ShortenerService) SaveNewUrl(url string, timeout int) (string, error) {
 	key := base64.Generate(20)
 
-	err := s.rc.Set(nil, key, url, time.Duration(timeout)).Err()
+	if !(strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")) {
+		url = "http://" + url
+	}
+
+	fmt.Println(url)
+
+	err := s.rc.Set(s.ctx, key, url, time.Duration(timeout)*time.Second).Err()
 
 	if err != nil {
 		return "", err
@@ -38,10 +48,15 @@ func (s ShortenerService) SaveNewUrl(url string, timeout int) (string, error) {
 
 func (s ShortenerService) GetFullLink(id string) (string, error) {
 
-	val, err := s.rc.Get(nil, id).Result()
+	val, err := s.rc.Get(s.ctx, id).Result()
 	if err != nil {
 		return "", err
 	}
-	return val, nil
 
+	return val, nil
+}
+
+func (s ShortenerService) DeleteShortLink(id string) error {
+	_, err := s.rc.Del(s.ctx, id).Result()
+	return err
 }
