@@ -1,0 +1,1 @@
+Little lightweight url shortener which works with redis. Written as a pet project for learning Golang, but can be used in prodcution purpose.
